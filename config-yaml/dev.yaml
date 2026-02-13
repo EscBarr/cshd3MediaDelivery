@@ -10,7 +10,7 @@ DB_INFO:
 
 
 HTTP_SERVER_INFO:
-  host: "172.16.0.196"
+  host: "172.16.0.85"
   port: "8082"
 
 JWT_TEMP_INFO:
@@ -19,7 +19,7 @@ JWT_TEMP_INFO:
 
 RABBIT_INFO:
   address_path: "amqp://app:test@172.16.0.94:5672/"
-  queue_name: "olymp_application"
+  queue_name: "files"
 
 ADDITIONAL_ADDRESSES:
   react: "http://172.16.1.196:5173"

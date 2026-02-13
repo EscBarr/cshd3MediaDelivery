@@ -24,7 +24,7 @@ func SetupLogger(env string) *slog.Logger {
 		)
 	}
 
-	return log.With(slog.String("service", "event-service"))
+	return log.With(slog.String("service", "cshdMediaDelivery"))
 }
 
 func Err(err error) slog.Attr {

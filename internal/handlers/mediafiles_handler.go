@@ -1,14 +1,17 @@
 package handlers
 
 import (
+	"cshdMediaDelivery/internal/lib/errs"
+	response "cshdMediaDelivery/internal/responce"
 	"io"
 	"net/http"
 	"path/filepath"
 	"time"
 
 	"cshdMediaDelivery/internal/services"
-	"encoding/json"
+
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 )
 
 type MediaHandler struct {
@@ -19,46 +22,64 @@ func NewMediaHandler(service services.MediaService) *MediaHandler {
 	return &MediaHandler{service: service}
 }
 
-func (h *MediaHandler) Routes() chi.Router {
-	r := chi.NewRouter()
-
-	r.Post("/upload", h.Upload)
-	r.Get("/{key}", h.Get)
-	r.Delete("/{key}", h.Delete)
-
-	return r
-}
-
 func (h *MediaHandler) Upload(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, response.ErrorApiResponse(
+			errs.ErrBadRequest.Wrap("failed to read multipart file"),
+		))
 		return
 	}
 	defer file.Close()
 
-	key, err := h.service.Upload(r.Context(), file, header.Filename)
+	key, err := h.service.Upload(ctx, file, header.Filename)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		if apiErr, ok := errs.IsApiError(err); ok {
+			render.Status(r, apiErr.HttpCode)
+			render.JSON(w, r, response.ErrorApiResponse(apiErr))
+			return
+		}
+
+		render.Status(r, http.StatusInternalServerError)
+		render.JSON(w, r, response.ErrorApiResponse(errs.ErrInternalError))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"file_id": key,
+	render.Status(r, http.StatusCreated)
+	render.JSON(w, r, response.ApiResponse{
+		Status:     response.StatusOK,
+		StatusCode: http.StatusCreated,
+		Data: map[string]string{
+			"file_id": key,
+		},
 	})
 }
 
 func (h *MediaHandler) Get(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	key := chi.URLParam(r, "key")
 	if key == "" {
-		http.Error(w, "missing file key", http.StatusBadRequest)
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, response.ErrorApiResponse(
+			errs.ErrBadRequest.Wrap("missing file key"),
+		))
 		return
 	}
 
-	file, err := h.service.Get(r.Context(), key)
+	file, err := h.service.Get(ctx, key)
 	if err != nil {
-		http.Error(w, "file not found", http.StatusNotFound)
+		if apiErr, ok := errs.IsApiError(err); ok {
+			render.Status(r, apiErr.HttpCode)
+			render.JSON(w, r, response.ErrorApiResponse(apiErr))
+			return
+		}
+
+		render.Status(r, http.StatusNotFound)
+		render.JSON(w, r, response.ErrorApiResponse(errs.ErrNotFound))
 		return
 	}
 
@@ -78,17 +99,34 @@ func (h *MediaHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MediaHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	key := chi.URLParam(r, "key")
 	if key == "" {
-		http.Error(w, "missing file key", http.StatusBadRequest)
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, response.ErrorApiResponse(
+			errs.ErrBadRequest.Wrap("missing file key"),
+		))
 		return
 	}
 
-	err := h.service.Delete(r.Context(), key)
+	err := h.service.Delete(ctx, key)
 	if err != nil {
-		http.Error(w, "failed to delete file", http.StatusInternalServerError)
+		if apiErr, ok := errs.IsApiError(err); ok {
+			render.Status(r, apiErr.HttpCode)
+			render.JSON(w, r, response.ErrorApiResponse(apiErr))
+			return
+		}
+
+		render.Status(r, http.StatusInternalServerError)
+		render.JSON(w, r, response.ErrorApiResponse(errs.ErrInternalError))
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, response.ApiResponse{
+		Status:     response.StatusOK,
+		StatusCode: http.StatusOK,
+		Message:    "file deleted successfully",
+	})
 }
