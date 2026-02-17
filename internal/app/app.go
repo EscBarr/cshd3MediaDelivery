@@ -37,8 +37,9 @@ func New(log *slog.Logger, cfg *config.Config) *App {
 	router := chi.NewRouter()
 
 	app := &App{log: log}
+	//TODO
 	// init cors
-	app.initCors(router, cfg.AdditionalAddressesConfig)
+	//app.initCors(router, cfg.AdditionalAddressesConfig)
 	// init middlewares
 	router.Use(midlogger.New(log))
 	router.Use(middleware.URLFormat)

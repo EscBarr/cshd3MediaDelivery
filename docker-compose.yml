@@ -1,0 +1,17 @@
+services:
+  cshdmediadelivery:
+    build:
+      context: ./
+    container_name: cshdmediadelivery
+    environment:
+      CONFIG_PATH: "/app/config-yaml/docker.yaml"
+    networks:
+      - media
+    ports:
+      - "6611:6611"
+    entrypoint: ["/bin/sh", "-c", "./cshdMediaDelivery -config \"$CONFIG_PATH\""]
+
+
+networks:
+  media:
+    driver: bridge
