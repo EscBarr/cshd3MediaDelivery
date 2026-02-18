@@ -10,8 +10,8 @@ DB_INFO:
 
 
 HTTP_SERVER_INFO:
-  host: "172.16.0.85"
-  port: "8082"
+  host: "172.16.0.119"
+  port: "6611"
 
 JWT_TEMP_INFO:
   key: "lololololololololololololololololololololololololololololol"
@@ -22,4 +22,4 @@ RABBIT_INFO:
   queue_name: "files"
 
 ADDITIONAL_ADDRESSES:
-  react: "http://172.16.1.196:5173"
+  react: "http://172.16.0.119:5173"

@@ -6,11 +6,12 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"cshdMediaDelivery/internal/services"
 
-	"github.com/go-chi/chi/v5"
+	//"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 )
 
@@ -24,6 +25,8 @@ func NewMediaHandler(service services.MediaService) *MediaHandler {
 
 func (h *MediaHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	r.Body = http.MaxBytesReader(w, r.Body, 25<<25) // 25 MB
 
 	file, header, err := r.FormFile("file")
 	if err != nil {
@@ -53,7 +56,8 @@ func (h *MediaHandler) Upload(w http.ResponseWriter, r *http.Request) {
 		Status:     response.StatusOK,
 		StatusCode: http.StatusCreated,
 		Data: map[string]string{
-			"file_id": key,
+			"file_id":       key,
+			"original_name": header.Filename,
 		},
 	})
 }
@@ -61,11 +65,27 @@ func (h *MediaHandler) Upload(w http.ResponseWriter, r *http.Request) {
 func (h *MediaHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	key := chi.URLParam(r, "key")
+	uri := r.RequestURI
+	// Убираем ведущий слеш
+	key := strings.TrimPrefix(uri, "/")
+
+	// Убираем query параметры
+	if idx := strings.Index(key, "?"); idx != -1 {
+		key = key[:idx]
+	}
 	if key == "" {
 		render.Status(r, http.StatusBadRequest)
 		render.JSON(w, r, response.ErrorApiResponse(
 			errs.ErrBadRequest.Wrap("missing file key"),
+		))
+		return
+	}
+
+	clean := filepath.Clean(key)
+	if clean != key || strings.Contains(key, "..") {
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, response.ErrorApiResponse(
+			errs.ErrBadRequest.Wrap("invalid file key"),
 		))
 		return
 	}
@@ -101,11 +121,28 @@ func (h *MediaHandler) Get(w http.ResponseWriter, r *http.Request) {
 func (h *MediaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	key := chi.URLParam(r, "key")
+	uri := r.RequestURI
+	// Убираем ведущий слеш
+	key := strings.TrimPrefix(uri, "/")
+
+	// Убираем query параметры
+	if idx := strings.Index(key, "?"); idx != -1 {
+		key = key[:idx]
+	}
+
 	if key == "" {
 		render.Status(r, http.StatusBadRequest)
 		render.JSON(w, r, response.ErrorApiResponse(
 			errs.ErrBadRequest.Wrap("missing file key"),
+		))
+		return
+	}
+
+	clean := filepath.Clean(key)
+	if clean != key || strings.Contains(key, "..") {
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, response.ErrorApiResponse(
+			errs.ErrBadRequest.Wrap("invalid file key"),
 		))
 		return
 	}

@@ -11,7 +11,7 @@ DB_INFO:
 
 HTTP_SERVER_INFO:
   host: "0.0.0.0"
-  port: "8082"
+  port: "6611"
 
 JWT_TEMP_INFO:
   key: "lololololololololololololololololololololololololololololol"

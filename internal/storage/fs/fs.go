@@ -2,6 +2,7 @@ package fs
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -16,6 +17,7 @@ func NewFSStorage(basePath string) *FSStorage {
 }
 
 func (f *FSStorage) Save(ctx context.Context, key string, file io.Reader) error {
+
 	fullPath := filepath.Join(f.basePath, key)
 
 	if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
@@ -33,9 +35,28 @@ func (f *FSStorage) Save(ctx context.Context, key string, file io.Reader) error 
 }
 
 func (f *FSStorage) Get(ctx context.Context, key string) (io.ReadSeeker, error) {
-	return os.Open(filepath.Join(f.basePath, key))
+	fullPath := filepath.Join(f.basePath, key)
+
+	file, err := os.Open(fullPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	return file, nil
 }
 
 func (f *FSStorage) Delete(ctx context.Context, key string) error {
-	return os.Remove(filepath.Join(f.basePath, key))
+	fullPath := filepath.Join(f.basePath, key)
+
+	// Проверяем, что файл не используется (опционально)
+	if err := os.Remove(fullPath); err != nil {
+		if os.IsNotExist(err) {
+			return err
+		}
+		return fmt.Errorf("failed to delete file: %w", err)
+	}
+	return nil
 }

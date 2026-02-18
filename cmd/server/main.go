@@ -12,6 +12,7 @@ import (
 )
 
 const LocalFilePath = "config-yaml/dev.yaml"
+const DockerFilePath = "config-yaml/docker.yaml"
 
 func main() {
 	// Init config
