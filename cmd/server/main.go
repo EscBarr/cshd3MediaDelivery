@@ -16,7 +16,7 @@ const DockerFilePath = "config-yaml/docker.yaml"
 
 func main() {
 	// Init config
-	cfg := config.GetConfig(LocalFilePath)
+	cfg := config.GetConfig(DockerFilePath)
 
 	// Init logger
 	log := liblogger.SetupLogger(cfg.Env)

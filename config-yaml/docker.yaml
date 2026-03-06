@@ -16,9 +16,9 @@ HTTP_SERVER_INFO:
 JWT_TEMP_INFO:
   key: "lololololololololololololololololololololololololololololol"
 
-RABBIT_INFO:
-  address_path: "amqp://application-service:application-password@rabbitmq:5672/"
-  queue_name: "olymp_application"
+#RABBIT_INFO:
+#  address_path: "amqp://application-service:application-password@rabbitmq:5672/"
+#  queue_name: "olymp_application"
 
 ADDITIONAL_ADDRESSES:
-  react: "http://localhost:5173"
+  vue: "http://localhost"

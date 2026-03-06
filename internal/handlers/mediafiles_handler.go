@@ -26,7 +26,7 @@ func NewMediaHandler(service services.MediaService) *MediaHandler {
 func (h *MediaHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	r.Body = http.MaxBytesReader(w, r.Body, 25<<25) // 25 MB
+	r.Body = http.MaxBytesReader(w, r.Body, 80<<20)
 
 	file, header, err := r.FormFile("file")
 	if err != nil {

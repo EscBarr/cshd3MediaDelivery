@@ -17,9 +17,9 @@ JWT_TEMP_INFO:
   key: "lololololololololololololololololololololololololololololol"
 
 
-RABBIT_INFO:
-  address_path: "amqp://app:test@172.16.0.94:5672/"
-  queue_name: "files"
+#RABBIT_INFO:
+#  address_path: "amqp://app:test@172.16.0.94:5672/"
+#  queue_name: "files"
 
 ADDITIONAL_ADDRESSES:
-  react: "http://172.16.0.119:5173"
+  vue: "http://172.16.0.119:5173"

@@ -39,7 +39,7 @@ func New(log *slog.Logger, cfg *config.Config) *App {
 	app := &App{log: log}
 	//TODO
 	// init cors
-	//app.initCors(router, cfg.AdditionalAddressesConfig)
+	app.initCors(router, cfg.AdditionalAddressesConfig)
 	// init middlewares
 	router.Use(midlogger.New(log))
 	router.Use(middleware.URLFormat)
@@ -95,7 +95,7 @@ func (a *App) initRoutes(router *chi.Mux,
 
 func (a *App) initCors(router *chi.Mux, cfg config.AdditionalAddressesConfig) {
 	corsOptions := cors.Options{
-		AllowedOrigins: []string{cfg.ReactVision, cfg.JureAssignmentsService, cfg.ApiGateway},
+		AllowedOrigins: []string{cfg.Vue},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowedHeaders: []string{
 			"Accept",
