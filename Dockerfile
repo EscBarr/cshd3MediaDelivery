@@ -20,7 +20,8 @@ WORKDIR /app
 
 RUN apk add --no-cache ca-certificates
 
-COPY --from=builder /app/cshdMediaDelivery .
+COPY --from=builder /app/cshdMediaDelivery /app/cshdMediaDelivery
+COPY --from=builder /app/config-yaml /app/config-yaml
 
 EXPOSE 6611
 
