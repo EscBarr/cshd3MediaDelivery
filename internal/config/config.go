@@ -16,6 +16,7 @@ type Config struct {
 	//	JwtConfig                 `yaml:"JWT_INFO"`
 	RabbitConfig    `yaml:"RABBIT_INFO"`
 	KiznaiverConfig `yaml:"KIZNAIVER_INFO"`
+	MinioConfig     `yaml:"MINIO_INFO"`
 }
 
 //type DatabaseConfig struct {
@@ -42,6 +43,13 @@ type RabbitConfig struct {
 
 type AdditionalAddressesConfig struct {
 	Vue string `yaml:"vue"`
+}
+
+type MinioConfig struct {
+	Endpoint        string `yaml:"endpoint"`
+	AccessKeyID     string `yaml:"access_key"`
+	SecretAccessKey string `yaml:"secret_key"`
+	Bucket          string `yaml:"bucket"`
 }
 
 type KiznaiverConfig struct {

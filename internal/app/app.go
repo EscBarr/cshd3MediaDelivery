@@ -7,6 +7,8 @@ import (
 	"cshdMediaDelivery/internal/lib/liblogger"
 	"cshdMediaDelivery/internal/middleware/midlogger"
 	"cshdMediaDelivery/internal/services"
+	"cshdMediaDelivery/internal/storage"
+	s3 "cshdMediaDelivery/internal/storage/S3storage"
 	"cshdMediaDelivery/internal/storage/fs"
 	"fmt"
 	"log/slog"
@@ -29,9 +31,32 @@ func New(log *slog.Logger, cfg *config.Config) *App {
 	//storage := postgresql.MustPosgreSQL(cfg.GetDataSourceName())
 	//log.Info("storage are enabled")
 
-	fsStorage := fs.NewFSStorage("./uploads")
+	//fsStorage := fs.NewFSStorage("./uploads")
 	// s3Storage := s3.NewS3Storage(...)
-	mediaService := services.NewMediaService(fsStorage)
+
+	var storage storage.Storage
+
+	if cfg.MinioConfig.Endpoint != "" {
+
+		s3Storage, err := s3.New(
+			cfg.MinioConfig.Endpoint,
+			cfg.MinioConfig.AccessKeyID,
+			cfg.MinioConfig.SecretAccessKey,
+			cfg.MinioConfig.Bucket,
+		)
+
+		if err != nil {
+			log.Error("failed to init s3 storage", err)
+			panic(err)
+		}
+
+		storage = s3Storage
+
+	} else {
+		storage = fs.NewFSStorage("./uploads")
+	}
+
+	mediaService := services.NewMediaService(storage)
 	mediaHandler := handlers.NewMediaHandler(mediaService)
 	// init router
 	router := chi.NewRouter()
@@ -49,8 +74,7 @@ func New(log *slog.Logger, cfg *config.Config) *App {
 	// 	return auth.AuthenticateMiddleware(next, cfg.Key)
 	// })
 
-	//TODO
-	// init connection manager for rabbit
+	//
 	//connectionManager := rabbitmq.New(cfg.AddressRabbitPath, log)
 	//connectionManager.Start(context.TODO())
 	//

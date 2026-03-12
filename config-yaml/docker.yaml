@@ -22,3 +22,9 @@ JWT_TEMP_INFO:
 
 ADDITIONAL_ADDRESSES:
   vue: "http://localhost"
+
+MINIO_INFO:
+  endpoint: "minio:9000"
+  access_key: "minioadmin"
+  secret_key: "minioadmin"
+  bucket: "media"
