@@ -11,8 +11,7 @@ services:
       - "6611:6611"
     entrypoint: ["/bin/sh", "-c", "./cshdMediaDelivery -config \"$CONFIG_PATH\""]
     depends_on:
-      minio:
-        condition: service_healthy
+      - minio
 
   minio:
     build:
