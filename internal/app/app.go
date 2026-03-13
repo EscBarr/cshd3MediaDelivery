@@ -34,29 +34,49 @@ func New(log *slog.Logger, cfg *config.Config) *App {
 	//fsStorage := fs.NewFSStorage("./uploads")
 	// s3Storage := s3.NewS3Storage(...)
 
-	var storage storage.Storage
+	var mediaStorage storage.Storage
 
 	if cfg.MinioConfig.Endpoint != "" {
 
-		s3Storage, err := s3.New(
-			cfg.MinioConfig.Endpoint,
-			cfg.MinioConfig.AccessKeyID,
-			cfg.MinioConfig.SecretAccessKey,
-			cfg.MinioConfig.Bucket,
-		)
+		var s3Storage storage.Storage
+		var err error
+
+		retries := 10
+		delay := 3 * time.Second
+
+		for i := 0; i < retries; i++ {
+
+			s3Storage, err = s3.New(
+				cfg.MinioConfig.Endpoint,
+				cfg.MinioConfig.AccessKeyID,
+				cfg.MinioConfig.SecretAccessKey,
+				cfg.MinioConfig.Bucket,
+			)
+
+			if err == nil {
+				break
+			}
+
+			log.Warn("failed to connect to S3",
+				"attempt", i+1,
+				"error", err,
+			)
+
+			time.Sleep(delay)
+		}
 
 		if err != nil {
 			log.Error("failed to init s3 storage", err)
 			panic(err)
 		}
 
-		storage = s3Storage
+		mediaStorage = s3Storage
 
 	} else {
-		storage = fs.NewFSStorage("./uploads")
+		mediaStorage = fs.NewFSStorage("./uploads")
 	}
 
-	mediaService := services.NewMediaService(storage)
+	mediaService := services.NewMediaService(mediaStorage)
 	mediaHandler := handlers.NewMediaHandler(mediaService)
 	// init router
 	router := chi.NewRouter()
