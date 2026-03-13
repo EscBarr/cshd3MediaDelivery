@@ -26,7 +26,7 @@ config-yaml/docker.yaml
 To use filesystem storage leave `minio.endpoint` empty:
 
 ```yaml
-minio:
+MINIO_INFO:
   endpoint: ""
 ```
 
@@ -35,6 +35,6 @@ minio:
 To use S3 storage set MinIO endpoint:
 
 ```yaml
-minio:
+MINIO_INFO:
   endpoint: "minio:9000"
 ```
