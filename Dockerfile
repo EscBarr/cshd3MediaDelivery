@@ -1,5 +1,7 @@
 FROM golang:1.26-alpine AS builder
 
+RUN apk add --no-cache postgresql-client
+
 WORKDIR /app
 
 # Копируем весь код

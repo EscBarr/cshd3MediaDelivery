@@ -1,12 +1,13 @@
 env: "dev"
 
 DB_INFO:
-  host: "application-db"
-  user: "application_user"
-  pass: "application_pass"
-  name: "ApplicationServiceDB"
+  host: "localhost"
+  user: "admin"
+  pass: "admin"
+  name: "docs_db"
   port: "5432"
   ssl_model: "disable"
+  time_backup_minutes: 60
 
 
 HTTP_SERVER_INFO:

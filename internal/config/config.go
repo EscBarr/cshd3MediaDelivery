@@ -19,13 +19,14 @@ type Config struct {
 	MinioConfig     `yaml:"MINIO_INFO"`
 }
 
-//type DatabaseConfig struct {
-//	Host     string `yaml:"host"`
-//	Name     string `yaml:"name"`
-//	User     string `yaml:"user"`
-//	Password string `yaml:"pass"`
-//	SslModel string `yaml:"ssl_model"`
-//}
+type DatabaseConfig struct {
+	Host              string `yaml:"host"`
+	Name              string `yaml:"name"`
+	User              string `yaml:"user"`
+	Password          string `yaml:"pass"`
+	SslModel          string `yaml:"ssl_model"`
+	timeBackupMinutes int    `yaml:"time_backup_minutes"`
+}
 
 type HTTPServerConfig struct {
 	Port string `yaml:"port"`

@@ -16,9 +16,16 @@ func NewFSStorage(basePath string) *FSStorage {
 	return &FSStorage{basePath: basePath}
 }
 
-func (f *FSStorage) Save(ctx context.Context, key string, file io.Reader) error {
+func (f *FSStorage) buildPath(key string, path *string) string {
+	if path == nil || *path == "" {
+		return filepath.Join(f.basePath, key)
+	}
+	return filepath.Join(f.basePath, *path, key)
+}
 
-	fullPath := filepath.Join(f.basePath, key)
+func (f *FSStorage) Save(ctx context.Context, key string, path *string, file io.Reader) error {
+
+	fullPath := f.buildPath(key, path)
 
 	if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
 		return err
@@ -34,24 +41,22 @@ func (f *FSStorage) Save(ctx context.Context, key string, file io.Reader) error 
 	return err
 }
 
-func (f *FSStorage) Get(ctx context.Context, key string) (io.ReadSeeker, error) {
-	fullPath := filepath.Join(f.basePath, key)
+func (f *FSStorage) Get(ctx context.Context, key string, path *string) (io.ReadSeeker, error) {
+
+	fullPath := f.buildPath(key, path)
 
 	file, err := os.Open(fullPath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, err
-		}
 		return nil, err
 	}
 
 	return file, nil
 }
 
-func (f *FSStorage) Delete(ctx context.Context, key string) error {
-	fullPath := filepath.Join(f.basePath, key)
+func (f *FSStorage) Delete(ctx context.Context, key string, path *string) error {
 
-	// Проверяем, что файл не используется (опционально)
+	fullPath := f.buildPath(key, path)
+
 	if err := os.Remove(fullPath); err != nil {
 		if os.IsNotExist(err) {
 			return err

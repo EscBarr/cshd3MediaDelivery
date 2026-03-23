@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"strings"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -43,21 +44,27 @@ func New(endpoint, accessKey, secretKey, bucket string) (*S3Storage, error) {
 	}, nil
 }
 
-func (s *S3Storage) Save(ctx context.Context, key string, file io.Reader) error {
+func (s *S3Storage) buildKey(key string, path *string) string {
+	if path == nil || *path == "" {
+		return key
+	}
+	return strings.TrimSuffix(*path, "/") + "/" + key
+}
+
+func (s *S3Storage) Save(ctx context.Context, key string, path *string, file io.Reader) error {
 
 	buf := bytes.NewBuffer(nil)
-
-	_, err := io.Copy(buf, file)
-	if err != nil {
+	if _, err := io.Copy(buf, file); err != nil {
 		return err
 	}
 
 	reader := bytes.NewReader(buf.Bytes())
+	finalKey := s.buildKey(key, path)
 
-	_, err = s.client.PutObject(
+	_, err := s.client.PutObject(
 		ctx,
 		s.bucket,
-		key,
+		finalKey,
 		reader,
 		int64(reader.Len()),
 		minio.PutObjectOptions{},
@@ -66,41 +73,36 @@ func (s *S3Storage) Save(ctx context.Context, key string, file io.Reader) error 
 	return err
 }
 
-func (s *S3Storage) Get(ctx context.Context, key string) (io.ReadSeeker, error) {
+func (s *S3Storage) Get(ctx context.Context, key string, path *string) (io.ReadSeeker, error) {
+
+	finalKey := s.buildKey(key, path)
 
 	obj, err := s.client.GetObject(
 		ctx,
 		s.bucket,
-		key,
+		finalKey,
 		minio.GetObjectOptions{},
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
 	buf := bytes.NewBuffer(nil)
-
-	_, err = io.Copy(buf, obj)
-	if err != nil {
+	if _, err = io.Copy(buf, obj); err != nil {
 		return nil, err
 	}
 
 	return bytes.NewReader(buf.Bytes()), nil
 }
 
-func (s *S3Storage) Delete(ctx context.Context, key string) error {
+func (s *S3Storage) Delete(ctx context.Context, key string, path *string) error {
 
-	err := s.client.RemoveObject(
+	finalKey := s.buildKey(key, path)
+
+	return s.client.RemoveObject(
 		ctx,
 		s.bucket,
-		key,
+		finalKey,
 		minio.RemoveObjectOptions{},
 	)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
