@@ -13,6 +13,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -21,23 +24,17 @@ import (
 )
 
 type App struct {
-	server *http.Server
-	log    *slog.Logger
+	server    *http.Server
+	log       *slog.Logger
+	scheduler *services.Scheduler // Добавляем планировщик
 }
 
 func New(log *slog.Logger, cfg *config.Config) *App {
 
 	// init storage
-	//storage := postgresql.MustPosgreSQL(cfg.GetDataSourceName())
-	//log.Info("storage are enabled")
-
-	//fsStorage := fs.NewFSStorage("./uploads")
-	// s3Storage := s3.NewS3Storage(...)
-
 	var mediaStorage storage.Storage
 
 	if cfg.MinioConfig.Endpoint != "" {
-
 		var s3Storage storage.Storage
 		var err error
 
@@ -45,7 +42,6 @@ func New(log *slog.Logger, cfg *config.Config) *App {
 		delay := 3 * time.Second
 
 		for i := 0; i < retries; i++ {
-
 			s3Storage, err = s3.New(
 				cfg.MinioConfig.Endpoint,
 				cfg.MinioConfig.AccessKeyID,
@@ -78,34 +74,43 @@ func New(log *slog.Logger, cfg *config.Config) *App {
 
 	mediaService := services.NewMediaService(mediaStorage)
 	mediaHandler := handlers.NewMediaHandler(mediaService)
+
+	// Создаем функцию для бэкапа
+	backupTask := func() error {
+		log.Info("Starting database backup")
+		result, err := mediaService.Upload(
+			context.Background(),
+			nil, // Здесь нужно передать reader из pg_dump
+			fmt.Sprintf("backup_%d.sql", time.Now().Unix()),
+		)
+		if err != nil {
+			log.Error("Backup failed", liblogger.Err(err))
+			return err
+		}
+		log.Info("Backup completed", "result", result)
+		return nil
+	}
+
+	// Создаем планировщик
+	scheduler := services.NewScheduler(
+		backupTask,
+		mediaService,
+		cfg.DatabaseConfig,
+	)
+
 	// init router
 	router := chi.NewRouter()
 
-	app := &App{log: log}
-	//TODO
+	app := &App{
+		log:       log,
+		scheduler: scheduler,
+	}
+
 	// init cors
 	app.initCors(router, cfg.AdditionalAddressesConfig)
 	// init middlewares
 	router.Use(midlogger.New(log))
 	router.Use(middleware.URLFormat)
-	// add Authentication with JWT token
-
-	// router.Use(func(next http.Handler) http.Handler {
-	// 	return auth.AuthenticateMiddleware(next, cfg.Key)
-	// })
-
-	//
-	//connectionManager := rabbitmq.New(cfg.AddressRabbitPath, log)
-	//connectionManager.Start(context.TODO())
-	//
-	//// init rabbit consumer
-	//rabbitConsumer := consumer.New(log, connectionManager, eventService)
-	//rabbitConsumer.Start(context.TODO(), cfg.QueueName)
-	//
-	//// init rabbit producer
-	//rabbitProducer := producer.New(log, connectionManager, gormORM, &outbox_repository.OutboxRepository{})
-	//rabbitProducer.Start(context.TODO())
-	//TODO
 
 	// init routes
 	app.initRoutes(router, mediaHandler)
@@ -122,19 +127,9 @@ func New(log *slog.Logger, cfg *config.Config) *App {
 func (a *App) initRoutes(router *chi.Mux,
 	mediaHandler *handlers.MediaHandler,
 ) {
-	//router.Get("/swagger/*", httpSwagger.WrapHandler)
-
-	// init subjects route
 	router.Post("/upload", mediaHandler.Upload)
 	router.Get("/{key}", mediaHandler.Get)
 	router.Delete("/{key}", mediaHandler.Delete)
-
-	// init events route
-	// router.With(auth.RoleBasedAccess(userrole.AdminRole)).Group(func(r chi.Router) {
-	// 	r.Post("/api/events", eventHandler.CreateEvent)
-	// 	r.Put("/api/events/{id}", eventHandler.UpdateEvent)
-	// 	r.Delete("/api/events/{id}", eventHandler.DeleteEvent)
-	// })
 }
 
 func (a *App) initCors(router *chi.Mux, cfg config.AdditionalAddressesConfig) {
@@ -169,20 +164,52 @@ func (a *App) MustRun() {
 func (a *App) Run() error {
 	const op = "app.Run"
 
-	a.log.Info("server starting")
-	if err := a.server.ListenAndServe(); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
+	// Запускаем планировщик
+	a.scheduler.Start()
+	a.log.Info("scheduler started")
+
+	// Канал для graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+
+	// Запускаем сервер в горутине
+	serverErr := make(chan error, 1)
+	go func() {
+		a.log.Info("server starting", "addr", a.server.Addr)
+		if err := a.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			serverErr <- fmt.Errorf("%s: %w", op, err)
+		}
+	}()
+
+	// Ожидаем сигнал остановки или ошибку сервера
+	select {
+	case err := <-serverErr:
+		a.log.Error("server error", liblogger.Err(err))
+		return err
+	case <-stop:
+		a.log.Info("shutdown signal received")
+		return a.Stop()
 	}
-	return nil
 }
 
-func (a *App) Stop() {
+func (a *App) Stop() error {
+	const op = "app.Stop"
+
+	a.log.Info("stopping application")
+
+	// Останавливаем планировщик
+	a.scheduler.Stop()
+	a.log.Info("scheduler stopped")
+
+	// Останавливаем HTTP сервер
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := a.server.Shutdown(ctx); err != nil {
-		a.log.Error("failee to stop sever", liblogger.Err(err))
-		return
+		a.log.Error("failed to stop server", liblogger.Err(err))
+		return fmt.Errorf("%s: %w", op, err)
 	}
+
 	a.log.Info("server stopped")
+	return nil
 }

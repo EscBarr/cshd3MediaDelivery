@@ -9,8 +9,8 @@ import (
 )
 
 type Config struct {
-	Env string `yaml:"env"`
-	//	DatabaseConfig            `yaml:"DB_INFO"`
+	Env                       string `yaml:"env"`
+	DatabaseConfig            `yaml:"DB_INFO"`
 	HTTPServerConfig          `yaml:"HTTP_SERVER_INFO"`
 	AdditionalAddressesConfig `yaml:"ADDITIONAL_ADDRESSES"`
 	//	JwtConfig                 `yaml:"JWT_INFO"`
@@ -21,11 +21,12 @@ type Config struct {
 
 type DatabaseConfig struct {
 	Host              string `yaml:"host"`
+	Port              int    `yaml:"name"`
 	Name              string `yaml:"name"`
 	User              string `yaml:"user"`
 	Password          string `yaml:"pass"`
 	SslModel          string `yaml:"ssl_model"`
-	timeBackupMinutes int    `yaml:"time_backup_minutes"`
+	TimeBackupMinutes int    `yaml:"time_backup_minutes"`
 }
 
 type HTTPServerConfig struct {

@@ -7,7 +7,7 @@ DB_INFO:
   name: "docs_db"
   port: "5432"
   ssl_model: "disable"
-  time_backup_minutes: 60
+  time_backup_minutes: 2
 
 
 HTTP_SERVER_INFO:

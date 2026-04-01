@@ -1,6 +1,8 @@
 package services
 
 import (
+	"context"
+	"cshdMediaDelivery/internal/config"
 	"fmt"
 	"io"
 	"log"
@@ -13,14 +15,16 @@ type Scheduler struct {
 	task     func() error
 	stopChan chan struct{}
 	Media    MediaService
+	DB       config.DatabaseConfig
 }
 
-func NewScheduler(interval time.Duration, task func() error, service MediaService) *Scheduler {
+func NewScheduler(task func() error, service MediaService, db config.DatabaseConfig) *Scheduler {
 	return &Scheduler{
-		interval: interval,
+		interval: time.Duration(db.TimeBackupMinutes) * time.Minute,
 		task:     task,
 		stopChan: make(chan struct{}),
 		Media:    service,
+		DB:       db,
 	}
 }
 
@@ -56,18 +60,31 @@ func (s *Scheduler) Stop() {
 	close(s.stopChan)
 }
 
-func (s *Scheduler) makeDatabaseCopy() error {
+func (s *Scheduler) makeDatabaseCopy() (string, error) {
 	fmt.Println("Creating database copy at:", time.Now())
 
-	reader, err := pgDumpReader("postgres://user:pass@postgres:5432/dbname?sslmode=disable")
+	reader, err := pgDumpReader(BuildDSN(s.DB))
 	if err != nil {
-		return err
+		return "", err
 	}
 	filename := fmt.Sprintf("backup_%d.sql", time.Now().Unix())
+
 	return s.Media.Upload(
 		context.Background(),
 		reader,
-		filename
+		filename,
+	)
+}
+
+func BuildDSN(c config.DatabaseConfig) string {
+	// Формат: postgres://user:password@host:port/dbname?sslmode=disable
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		c.User,
+		c.Password,
+		c.Host,
+		c.Port,
+		c.Name,
+		c.SslModel,
 	)
 }
 
