@@ -18,14 +18,21 @@ type Scheduler struct {
 	DB       config.DatabaseConfig
 }
 
-func NewScheduler(task func() error, service MediaService, db config.DatabaseConfig) *Scheduler {
-	return &Scheduler{
+func NewScheduler(service MediaService, db config.DatabaseConfig) *Scheduler {
+	s := &Scheduler{
 		interval: time.Duration(db.TimeBackupMinutes) * time.Minute,
-		task:     task,
 		stopChan: make(chan struct{}),
 		Media:    service,
 		DB:       db,
 	}
+
+	// вот здесь связываем task
+	s.task = func() error {
+		_, err := s.makeDatabaseCopy()
+		return err
+	}
+
+	return s
 }
 
 func (s *Scheduler) Start() {

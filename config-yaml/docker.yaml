@@ -5,9 +5,9 @@ DB_INFO:
   user: "admin"
   pass: "admin"
   name: "docs_db"
-  port: "5432"
+  port: 5432
   ssl_model: "disable"
-  time_backup_minutes: 2
+  time_backup_minutes: 1
 
 
 HTTP_SERVER_INFO:

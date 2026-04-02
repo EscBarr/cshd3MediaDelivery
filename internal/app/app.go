@@ -75,25 +75,8 @@ func New(log *slog.Logger, cfg *config.Config) *App {
 	mediaService := services.NewMediaService(mediaStorage)
 	mediaHandler := handlers.NewMediaHandler(mediaService)
 
-	// Создаем функцию для бэкапа
-	backupTask := func() error {
-		log.Info("Starting database backup")
-		result, err := mediaService.Upload(
-			context.Background(),
-			nil, // Здесь нужно передать reader из pg_dump
-			fmt.Sprintf("backup_%d.sql", time.Now().Unix()),
-		)
-		if err != nil {
-			log.Error("Backup failed", liblogger.Err(err))
-			return err
-		}
-		log.Info("Backup completed", "result", result)
-		return nil
-	}
-
 	// Создаем планировщик
 	scheduler := services.NewScheduler(
-		backupTask,
 		mediaService,
 		cfg.DatabaseConfig,
 	)
