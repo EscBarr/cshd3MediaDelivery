@@ -1,7 +1,7 @@
 env: "dev"
 
 DB_INFO:
-  host: "localhost"
+  host: "172.16.0.43"
   user: "admin"
   pass: "admin"
   name: "docs_db"

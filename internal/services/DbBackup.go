@@ -69,7 +69,6 @@ func (s *Scheduler) Stop() {
 
 func (s *Scheduler) makeDatabaseCopy() (string, error) {
 	fmt.Println("Creating database copy at:", time.Now())
-
 	reader, err := pgDumpReader(BuildDSN(s.DB))
 	if err != nil {
 		return "", err
