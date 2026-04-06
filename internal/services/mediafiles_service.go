@@ -71,7 +71,7 @@ func detectAllowedExtension(contentType, originalName string) (string, bool) {
 	switch contentType {
 	case "application/octet-stream", "text/plain":
 		switch ext {
-		case "sql", "dump", "db", "sqlite":
+		case "doc", "xls", "sql", "dump", "ppt", "db", "sqlite":
 			return ext, true
 		}
 	}
@@ -89,7 +89,7 @@ func detectAllowedExtension(contentType, originalName string) (string, bool) {
 	// 4. ZIP (Office + иногда дампы)
 	if contentType == "application/zip" {
 		switch ext {
-		case "docx", "xlsx", "xls", "pptx":
+		case "docx", "xlsx", "pptx", "docm", "xlsm", "pptm", "odt", "ods", "odp":
 			return ext, true
 		case "sql", "dump":
 			return ext, true
