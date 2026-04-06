@@ -12,6 +12,38 @@ services:
     entrypoint: ["/bin/sh", "-c", "./cshdMediaDelivery -config \"$CONFIG_PATH\""]
     depends_on:
       - minio
+#  cshdmediadelivery:
+#    build:
+#      context: ./
+#      dockerfile: Dockerfile.debug
+#    container_name: cshdmediadelivery
+#    environment:
+#      CONFIG_PATH: "/app/config-yaml/docker.yaml"
+#    networks:
+#      - media
+#    ports:
+#      - "6611:6611"
+#      - "40000:40000"   #  debugger port
+#    volumes:
+#      - .:/app
+#    cap_add:
+#      - SYS_PTRACE
+#    security_opt:
+#      - seccomp:unconfined
+#    stdin_open: true
+#    tty: true
+#    depends_on:
+#      - minio
+#    command: >
+#      sh -c "
+#      go build -gcflags='all=-N -l' -o cshdMediaDelivery ./cmd/server/main.go &&
+#      dlv exec ./cshdMediaDelivery
+#      --headless
+#      --listen=:40000
+#      --api-version=2
+#      --accept-multiclient
+#      -- ./cshdMediaDelivery -config \"$CONFIG_PATH\"
+#      "
 
   minio:
     build:
