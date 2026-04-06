@@ -23,22 +23,22 @@ func (f *FSStorage) buildPath(key string, path *string) string {
 	return filepath.Join(f.basePath, *path, key)
 }
 
-func (f *FSStorage) Save(ctx context.Context, key string, path *string, file io.Reader) (string, error) {
+func (f *FSStorage) Save(ctx context.Context, key string, path *string, file io.Reader) error {
 
 	fullPath := f.buildPath(key, path)
 
 	if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
-		return "", err
+		return err
 	}
 
 	dst, err := os.Create(fullPath)
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer dst.Close()
 
 	_, err = io.Copy(dst, file)
-	return fullPath, err
+	return err
 }
 
 func (f *FSStorage) Get(ctx context.Context, key string, path *string) (io.ReadSeeker, error) {

@@ -51,11 +51,11 @@ func (s *S3Storage) buildKey(key string, path *string) string {
 	return strings.TrimSuffix(*path, "/") + "/" + key
 }
 
-func (s *S3Storage) Save(ctx context.Context, key string, path *string, file io.Reader) (string, error) {
+func (s *S3Storage) Save(ctx context.Context, key string, path *string, file io.Reader) error {
 
 	buf := bytes.NewBuffer(nil)
 	if _, err := io.Copy(buf, file); err != nil {
-		return "", err
+		return err
 	}
 
 	reader := bytes.NewReader(buf.Bytes())
@@ -70,7 +70,7 @@ func (s *S3Storage) Save(ctx context.Context, key string, path *string, file io.
 		minio.PutObjectOptions{},
 	)
 
-	return finalKey, err
+	return err
 }
 
 func (s *S3Storage) Get(ctx context.Context, key string, path *string) (io.ReadSeeker, error) {
