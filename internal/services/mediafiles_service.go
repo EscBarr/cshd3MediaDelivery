@@ -158,12 +158,11 @@ func (m *mediaService) Upload(ctx context.Context, file io.Reader, originalName 
 	path, ok := assignPathFromExtension(ext)
 
 	key := fmt.Sprintf("%s.%s", id, ext)
-
-	if err := m.storage.Save(ctx, key, &path, reader); err != nil {
+	finalKey, err := m.storage.Save(ctx, key, &path, reader)
+	if err != nil {
 		return "", errs.ErrInternalError.Wrap("failed to save file")
 	}
-
-	return key, nil
+	return finalKey, nil
 }
 
 func (m *mediaService) Get(ctx context.Context, key string) (io.ReadSeeker, error) {
