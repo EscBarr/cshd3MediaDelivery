@@ -167,9 +167,20 @@ func (m *mediaService) Upload(ctx context.Context, file io.Reader, originalName 
 }
 
 func (m *mediaService) Get(ctx context.Context, key string) (io.ReadSeeker, error) {
-	return m.storage.Get(ctx, key, nil)
+
+	ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(key), "."))
+	path, ok := assignPathFromExtension(ext)
+	if !ok {
+		return nil, errs.ErrBadRequest.Wrap("unsupported file type")
+	}
+	return m.storage.Get(ctx, key, &path)
 }
 
 func (m *mediaService) Delete(ctx context.Context, key string) error {
-	return m.storage.Delete(ctx, key, nil)
+	ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(key), "."))
+	path, ok := assignPathFromExtension(ext)
+	if !ok {
+		return errs.ErrBadRequest.Wrap("unsupported file type")
+	}
+	return m.storage.Delete(ctx, key, &path)
 }
