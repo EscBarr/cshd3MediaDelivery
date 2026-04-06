@@ -1,13 +1,13 @@
 env: "dev"
 
 DB_INFO:
-  host: "172.16.0.43"
+  host: "172.18.0.7"
   user: "admin"
   pass: "admin"
   name: "docs_db"
   port: 5432
   ssl_model: "disable"
-  time_backup_minutes: 1
+  time_backup_minutes: 720
 
 
 HTTP_SERVER_INFO:
