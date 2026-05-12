@@ -44,7 +44,8 @@ type RabbitConfig struct {
 }
 
 type AdditionalAddressesConfig struct {
-	Vue string `yaml:"vue"`
+	Vue     string `yaml:"vue"`
+	Vue_sec string `yaml:"vue_sec"`
 }
 
 type MinioConfig struct {

@@ -23,6 +23,7 @@ JWT_TEMP_INFO:
 
 ADDITIONAL_ADDRESSES:
   vue: "http://localhost"
+  vue_sec: "http://localhost"
 
 MINIO_INFO:
   endpoint: "minio:9000"

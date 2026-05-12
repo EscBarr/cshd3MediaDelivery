@@ -117,7 +117,7 @@ func (a *App) initRoutes(router *chi.Mux,
 
 func (a *App) initCors(router *chi.Mux, cfg config.AdditionalAddressesConfig) {
 	corsOptions := cors.Options{
-		AllowedOrigins: []string{cfg.Vue},
+		AllowedOrigins: []string{cfg.Vue, cfg.Vue_sec},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowedHeaders: []string{
 			"Accept",
